@@ -27,7 +27,7 @@ void dmicro(int n){
 //Ports Initiallization
 void ports_initiallization(void){
 volatile unsigned long delay;
-	
+
 //PORTA
 	SYSCTL_RCGCGPIO_R |= 0x01;
 	while ((SYSCTL_PRGPIO_R & 0x01) == 0){}
@@ -38,7 +38,7 @@ volatile unsigned long delay;
 	GPIO_PORTA_AFSEL_R &= ~ 0xE0;	
 	GPIO_PORTA_PCTL_R &= ~ 0xFFF00000;
 
-		
+
 //PORTB	
 	SYSCTL_RCGCGPIO_R |= 0x02; 
 	while ((SYSCTL_PRGPIO_R & 0x02) == 0){}
@@ -48,7 +48,7 @@ volatile unsigned long delay;
 	GPIO_PORTB_AMSEL_R &= ~0xFF;
 	GPIO_PORTB_AFSEL_R &= ~0xFF;
 	GPIO_PORTB_PCTL_R &= ~0xFFFFFFFF;
-		
+
 //PORTF		
 	SYSCTL_RCGCGPIO_R |= 0x20;
 	while( (SYSCTL_PRGPIO_R & 0x20) == 0){}
@@ -75,19 +75,19 @@ volatile unsigned long delay;
   UART5_CTL_R  = 0x201;	//reciever only	
 	}
 
-	
+
 //LED_FUNCTOINS
 	const double PI = 3.1415926;
-	 
+
 
 //Function to receive the data from the GPS
  void GpsInterface(char* firstchar){
 	int i,j,final ;
 	int done = 1;
-	
+
 	while( (UART5_FR_R &0x10)!= 0){}
-		
-	
+
+
 	do{
 		while (UART5_DR_R != 0x24){}
 			for ( i=0 ; i<5 ; i++){
@@ -102,18 +102,20 @@ volatile unsigned long delay;
 			else done =0;
 		}
 	while(!done);	
-   		
+
 	}
 
 //Function to extract the Lat & Long
 static void extract(double* x1,double* y1,char* pointer){	
-	  char *ptrx;
+	  char *ptrx1, *ptrx2;
     int index;
-    double retx;
-    char *ptry;
-    double rety;
+    double retx, retX1, retX2;
+    char *ptry1, *ptry2;
+    double rety, retY1, retY2;
     int i;
     int j=17;
+	  char fixedX1[2], fixedX2[10];
+	  char fixedY1[3], fixedY2[11];
     char finalx[20];
     char finaly[20];
 //    char str[] ="$GPGGA,181908.00,3404.7041778,N,07044.3966270,W,4,13,1.00,495.144,M,29.200,M,0.10,0000*40";   
@@ -127,10 +129,10 @@ static void extract(double* x1,double* y1,char* pointer){
             j++;
         }
     }
-	
+
     for(i=0; i<20;i++){
         if (pointer[index]==','){
-            
+
             break;
         }
         else{
@@ -138,20 +140,38 @@ static void extract(double* x1,double* y1,char* pointer){
             index++;
         }
 		}
-		
+		//fixing latitude
+		for(i=0;i<2;i++){
+		fixedX1[i]=finalx[i];
+		}
+		for(i=2;i<20;i++){
+		fixedX2[i]=finalx[i];
+		}
+		retX1 = strtod(fixedX1, &ptrx1);
+		retX2 = strtod(fixedX2, &ptrx2);
+    retx = retX1 + (retX2/60);
+		//fixing longitude
+		for(i=0;i<3;i++){
+		fixedY1[i]=finaly[i];
+		}
+		for(i=3;i<20;i++){
+		fixedY2[i]=finaly[i];
+		}
+		retY1 = strtod(fixedY1, &ptry1);
+		retY2 = strtod(fixedY2, &ptry2);
+    rety = retY1 + (retY2/60);
 //Trying the c code on a compilor
 //   printf(finalx);
 //   printf("\n");
 //   printf(finaly);
 //   printf("\n");
-     retx = strtod(finalx, &ptrx);
+     
 		*x1 =retx;
 //   printf("%lf",retx);
 //   printf("\n");
-     rety = strtod(finaly, &ptry);
 		 *y1 = rety;
 //   printf("%lf",rety);
-		
+
 	}
 
 
@@ -168,7 +188,7 @@ static double calcDist( double x1, double y1)
 		dmilli(1000);
 		GpsInterface(secArray);
 		extract(&x2,&y2,secArray);
-	
+
 	x = (x2 - x_)* PI /180;
   y = (y2 - y_)* PI /180;
 	x1 =  x1 * PI /180;
@@ -179,18 +199,18 @@ static double calcDist( double x1, double y1)
   y_ = y2;		
 	}
  	// x2=500,y2=500;
-  
+
 	return (d);
 }
 
 //LED function
 static void LedOn(double d){
        if (d>=100) {
-      
+
            GPIO_PORTF_DATA_R |= 0x04;
         }
 }
-	
+
 
 //LCD_FUNCTIONS
 
@@ -222,7 +242,7 @@ void LCD_Data( char data)
 //LCD restart
 void LCD_init(void)
 	{
-	
+
 	 dmilli(20);
    LCD_Cmd(0x38); // Select 8-bit Mode of LCD
 	 dmicro(50);
@@ -240,40 +260,40 @@ char convert (int a ){
 	case 0 :
 		return '0';
 		break ;
-	
+
 	case 1 :
 			return '1';
 			break ;
-	
+
 	case 2 :
 			return '2';
 			break ;
-	
+
 	case 3 :
 			return '3';
 			break ;
-	
-	
+
+
 	case 4 :
 			return '4';
 			break ;
-	
+
 	case 5 :
 			return '5';
 			break ;
-	
+
 	case 6 :
 			return '6';
 			break ;
-	
+
 	case 7 :
 			return '7';
 			break ;
-	
+
 	case 8 :
 			return '8';
 			break ;
-	
+
 	case 9 :
 			return '9';
 			break ;
@@ -349,23 +369,23 @@ int main ()
 	double xInitial;
 	double yInitial;
 
-	
+
 	ports_initiallization();
 	dmilli(50);
-	
+
 	GpsInterface(dataArray);
 	extract(&xInitial,&yInitial,dataArray);
 	distance	= calcDist( xInitial, yInitial);
-    
+
 	LedOn(distance);
-	
+
 	convert_to_char(distance);
-	
+
 	LCD_init();
-	
+
 	LCD_Test();
 
-	
+
 	while (1)
     {
 
